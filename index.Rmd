@@ -1,5 +1,5 @@
 ---
-title: "Self-reported life satisfaction, 2011 to 2022"
+title: "Self-reported life satisfaction, 2010 to 2022"
 output: 
   html_document:
     theme: united
@@ -24,8 +24,8 @@ pacman::p_load(plotly, tidyverse, reactable, here)
 
 ```{r}
 ## Import data
-cantril <- 
-  read_csv(here("data/happiness-cantril-ladder.csv")) %>% 
+happiness <- 
+  read_csv(here("data/share-of-people-who-say-they-are-happy.csv")) %>% 
   rename(Country = Entity)
 ```
 
@@ -36,12 +36,12 @@ cantril <-
 ## 🔢 Table
 
 ```{r}
-cantril %>% 
-  filter(Year %in% c(2011, 2022)) %>% 
-  pivot_wider(names_from = Year, values_from = `Cantril ladder score`, id_cols = Country) %>% 
-  select(Country, `2011`, `2022`) %>% 
-  mutate(`Absolute change` = round(`2022` - `2011`, 3)) %>% 
-  mutate(`Relative change` = (`2022` - `2011`) / `2011`) %>% 
+happiness %>% 
+  filter(Year %in% c(2010, 2022)) %>% 
+  pivot_wider(names_from = Year, values_from = `Happiness: Happy (aggregate)`, id_cols = Country) %>% 
+  select(Country, `2010`, `2022`) %>% 
+  mutate(`Absolute change` = round(`2022` - `2010`, 3)) %>% 
+  mutate(`Relative change` = (`2022` - `2010`) / `2010`) %>% 
   reactable(
     columns = list(`Relative change` = colDef(format = colFormat(percent = TRUE, digits = 1))) 
   )
@@ -50,12 +50,12 @@ cantril %>%
 ## 🌎 Map
 
 ```{r}
-cantril %>% 
-  mutate(`Cantril ladder score` = round(`Cantril ladder score`, 2)) %>%
+happiness %>% 
+  mutate(`Happiness: Happy (aggregate)` = round(`Happiness: Happy (aggregate)`, 2)) %>%
   plot_geo(width = 940) %>% 
   add_trace(
-    z = ~`Cantril ladder score`,
-    color = ~`Cantril ladder score`,
+    z = ~`Happiness: Happy (aggregate)`,
+    color = ~`Happiness: Happy (aggregate)`,
     locations = ~Code,
     text = ~Country,
     frame = ~Year, colors = "YlGn"
@@ -69,18 +69,18 @@ cantril %>%
 ```{r}
 # simple line chart of the data, for five countries on different continents (ggplot, piped into ggplotly)
 
-cantril_chart <- 
-  cantril %>% 
-  filter(Country %in% c("Norway", "Australia", "Germany", "Bolivia", "Colombia", "Bhutan")) %>%
-  ggplot(aes(x = Year, y = `Cantril ladder score`, color = Country)) +
+happiness_chart <- 
+  happiness %>% 
+  filter(Country %in% c("United kingdom", "Zambia", "Brazil", "China", "Egypt", "India")) %>%
+  ggplot(aes(x = Year, y = `Happiness: Happy (aggregate)`, color = Country)) +
   geom_line() +
-  scale_y_continuous(limits = c(0, 10)) +
+  scale_y_continuous(limits = c(0, 100)) +
   labs(x = NULL,
        y = NULL, 
        color = NULL) +
   theme_minimal() 
 
-ggplotly(cantril_chart, width = 940)
+ggplotly(happiness_chart, width = 940)
 ```
 
 ## Advanced (Optional) 📈
@@ -94,35 +94,35 @@ pacman::p_load(crosstalk)
 
 
 # Crosstalk shared data
-shared_cantril <- highlight_key(cantril)
+shared_happiness <- highlight_key(happiness)
 
-cantril_plotly <- plot_ly(
-  shared_cantril, 
+happiness_plotly <- plot_ly(
+  shared_happiness, 
   x = ~Year, 
-  y = ~`Cantril ladder score`, 
+  y = ~`Happiness: Happy (aggregate)`, 
   color = ~Country, 
   type = "scatter", 
   mode = "lines+markers"
 ) %>%
-  layout(yaxis = list(range = c(0, 10)))
+  layout(yaxis = list(range = c(0, 100)))
 
 
 country_filter <- filter_select(
   "country_filter", 
   "Select a country to examine", 
-  shared_cantril, 
+  shared_happiness, 
   ~Country, 
   multiple = TRUE
 )
 
 bscols(
-  list(country_filter, cantril_plotly)
+  list(country_filter, happiness_plotly)
 )
 ```
 
 <script>
 function filter_default() {
-  var default_countries = ["Norway", "Australia", "Germany", "Bolivia", "Colombia", "Bhutan"]; // Set default countries here
+  var default_countries = ["Kuwait", "Iraq", "Japan", "Qatar", "Malaysia", "Rwanda"]; // Set default countries here
   document.getElementById("country_filter").getElementsByClassName("selectized")[0].selectize.setValue(default_countries, false);
 }
 window.onload = filter_default;
